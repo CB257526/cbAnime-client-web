@@ -51,3 +51,16 @@ export interface AnimePageResult {
   pages: number;
   total: number;
 }
+
+export interface EpisodeDTO {
+  episodeName: string;
+  m3u8Url: string;
+}
+
+export interface PlaySourceDTO {
+  sourceName: string;
+  sourceKey: string;
+  episodes: EpisodeDTO[];
+  success: boolean;
+  errorMessage?: string;
+}

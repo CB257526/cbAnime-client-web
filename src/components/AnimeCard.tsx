@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { AnimeHomeDTO } from '../types/anime';
 
 interface AnimeCardProps {
@@ -5,8 +6,13 @@ interface AnimeCardProps {
 }
 
 export function AnimeCard({ anime }: AnimeCardProps) {
+  const navigate = useNavigate();
+
   return (
-    <div className="group cursor-pointer">
+    <div
+      className="group cursor-pointer"
+      onClick={() => navigate(`/anime/${anime.id}`)}
+    >
       <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-[#12121a] border border-white/5 transition-all duration-300 group-hover:border-[#ff6b9d]/30 group-hover:shadow-lg group-hover:shadow-[#ff6b9d]/5">
         <img
           src={anime.imagesLarge}

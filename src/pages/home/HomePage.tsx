@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { animeApi } from '../../api/anime';
 import { authStorage } from '../../utils/authStorage';
 import { BannerCarousel } from '../../components/BannerCarousel';
 import { AnimeGrid } from '../../components/AnimeCard';
+import { SearchBar } from '../../components/SearchBar';
+import { Live2DWidget } from '../../components/Live2DWidget';
 import { AnimeHomeDTO } from '../../types/anime';
 
 export function HomePage() {
@@ -79,6 +81,9 @@ export function HomePage() {
                 <span className="text-white">CB </span>
                 <span className="text-gradient bg-gradient-to-r from-[#ff6b9d] to-[#ffa726] bg-clip-text text-transparent">Anime</span>
               </h1>
+              <div className="hidden lg:block w-80">
+                <SearchBar size="sm" />
+              </div>
               <nav className="hidden md:flex items-center gap-6">
                 <a href="/" className="text-sm text-white relative group">
                   <span className="relative z-10">首页</span>
@@ -94,7 +99,10 @@ export function HomePage() {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
+              <Link
+                to="/profile"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              >
                 <div className="relative">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#ff6b9d]/20 to-[#ffa726]/20 border border-[#ff6b9d]/30 flex items-center justify-center">
                     <span className="text-sm font-medium text-gradient bg-gradient-to-r from-[#ff6b9d] to-[#ffa726] bg-clip-text text-transparent">
@@ -104,7 +112,7 @@ export function HomePage() {
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#ff6b9d]/20 to-[#ffa726]/20 blur-lg opacity-50" />
                 </div>
                 <span className="text-sm text-white/70 hidden sm:block">{userNickname}</span>
-              </div>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-3 py-1.5 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300"
@@ -141,6 +149,8 @@ export function HomePage() {
           </p>
         </div>
       </footer>
+
+      <Live2DWidget />
 
       <style>{`
         @keyframes fade-in {

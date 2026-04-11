@@ -1,6 +1,6 @@
-import axiosInstance from '../utils/api';
+import axiosInstance, { axiosInstanceLongTimeout } from '../utils/api';
 import { Result } from '../types/auth';
-import { AnimeHomeDTO, AnimeDetailDTO, AnimeQueryDTO, PageResult } from '../types/anime';
+import { AnimeHomeDTO, AnimeDetailDTO, AnimeQueryDTO, PageResult, PlaySourceDTO } from '../types/anime';
 
 export const animeApi = {
   getAdminRecommendList: async (): Promise<Result<AnimeHomeDTO[]>> => {
@@ -57,6 +57,16 @@ export const animeApi = {
 
   getAnimeByIds: async (ids: number[]): Promise<Result<AnimeHomeDTO[]>> => {
     const response = await axiosInstance.post<Result<AnimeHomeDTO[]>>('/api/metadata/list/ids', ids);
+    return response.data;
+  },
+
+  getAnimePlay: async (id: number): Promise<Result<AnimeDetailDTO>> => {
+    const response = await axiosInstance.get<Result<AnimeDetailDTO>>(`/api/metadata/play/${id}`);
+    return response.data;
+  },
+
+  getAnimeSources: async (id: number): Promise<Result<PlaySourceDTO[]>> => {
+    const response = await axiosInstanceLongTimeout.get<Result<PlaySourceDTO[]>>(`/api/metadata/play/${id}/sources`);
     return response.data;
   },
 };

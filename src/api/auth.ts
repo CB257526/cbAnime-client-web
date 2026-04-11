@@ -27,6 +27,11 @@ export const authApi = {
     return response.data;
   },
 
+  getProfile: async (): Promise<Result<UserDTO>> => {
+    const response = await axiosInstance.get<Result<UserDTO>>('/api/user/profile');
+    return response.data;
+  },
+
   refreshToken: async (refreshToken: string): Promise<Result<TokenDTO>> => {
     const response = await axiosInstance.post<Result<TokenDTO>>('/api/auth/refresh', { refreshToken });
     return response.data;
