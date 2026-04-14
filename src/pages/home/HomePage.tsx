@@ -89,9 +89,12 @@ export function HomePage() {
                   <span className="relative z-10">首页</span>
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#ff6b9d] to-[#ffa726] group-hover:w-full transition-all duration-300" />
                 </a>
-                <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">
-                  动漫列表
-                </a>
+                <Link to="/profile/favorites" className="text-sm text-white/50 hover:text-white transition-colors">
+                  我的收藏
+                </Link>
+                <Link to="/profile/history" className="text-sm text-white/50 hover:text-white transition-colors">
+                  观看记录
+                </Link>
                 <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">
                   排行榜
                 </a>

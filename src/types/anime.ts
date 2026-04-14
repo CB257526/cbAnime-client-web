@@ -64,3 +64,116 @@ export interface PlaySourceDTO {
   success: boolean;
   errorMessage?: string;
 }
+
+export interface WatchHistoryUpdateDTO {
+  metadataId: number;
+  episodeIndex: number;
+  sourceKey?: string;
+  progressSeconds?: number;
+  watchDuration?: number;
+}
+
+export interface UserWatchHistoryDTO {
+  id: number;
+  userId: number;
+  metadataId: number;
+  animeName: string;
+  animeCover: string;
+  episodeIndex: number;
+  sourceKey: string;
+  progressSeconds: number;
+  watchDuration: number;
+  lastWatchTime: string;
+}
+
+export interface FavoriteAddDTO {
+  metadataId: number;
+  note?: string;
+  tags?: string;
+}
+
+export interface FavoriteUpdateDTO {
+  note?: string;
+  tags?: string;
+}
+
+export interface UserFavoriteDTO {
+  id: number;
+  userId: number;
+  metadataId: number;
+  animeName: string;
+  animeNameCn: string;
+  animeCover: string;
+  score: number;
+  episodes: number;
+  tags: string[];
+  favoriteTime: string;
+  note: string;
+  userTags: string;
+}
+
+export interface DanmakuMessageDTO {
+  id: number;
+  videoId: number;
+  episodeIndex: number;
+  userId: number;
+  userNickname: string;
+  userAvatar: string;
+  content: string;
+  color: string;
+  danmakuType: 0 | 1 | 2;
+  timePosition: number;
+  createTime: string;
+}
+
+export interface DanmakuListDTO {
+  videoId: number;
+  episodeIndex: number;
+  danmakuList: DanmakuMessageDTO[];
+  total: number;
+}
+
+export interface DanmakuSendDTO {
+  videoId: number;
+  episodeIndex: number;
+  content: string;
+  color?: string;
+  danmakuType?: 0 | 1 | 2;
+  timePosition?: number;
+}
+
+export interface DanmakuReportDTO {
+  danmakuId: number;
+  reportReason?: string;
+  reportType?: 0 | 1 | 2 | 3;
+}
+
+export interface DanmakuReport {
+  id: number;
+  danmakuId: number;
+  reporterUserId: number;
+  reportReason: string;
+  reportType: number;
+  status: number;
+  handleAdminId?: number;
+  handleTime?: string;
+  handleResult?: string;
+  createTime: string;
+  updateTime: string;
+  deleted: number;
+}
+
+export type DanmakuType = 0 | 1 | 2;
+
+export const DANMAKU_TYPE_LABELS: Record<DanmakuType, string> = {
+  0: '滚动',
+  1: '顶部',
+  2: '底部',
+};
+
+export const REPORT_TYPE_LABELS: Record<number, string> = {
+  0: '垃圾广告',
+  1: '恶意刷屏',
+  2: '人身攻击',
+  3: '其他',
+};
