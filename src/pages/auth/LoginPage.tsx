@@ -64,8 +64,14 @@ export function LoginPage() {
         const userResponse = await authApi.getCurrentUser();
         if (userResponse.success && userResponse.data) {
           authStorage.saveUser(userResponse.data);
+          if (userResponse.data.role === 'ADMIN') {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
+        } else {
+          navigate('/');
         }
-        navigate('/');
       } else {
         setError(response.message || '登录失败');
       }
