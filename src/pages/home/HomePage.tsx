@@ -5,6 +5,7 @@ import { animeApi } from '../../api/anime';
 import { AnimeHomeDTO } from '../../types/anime';
 import { SakuraPetals } from '../../components/SakuraPetals';
 import { Live2DWidget } from '../../components/Live2DWidget';
+import { ImportConfigModal } from '../../components/ImportConfigModal';
 
 function BannerCarousel({ banners }: { banners: AnimeHomeDTO[] }) {
   const [current, setCurrent] = useState(0);
@@ -191,6 +192,7 @@ export function HomePage() {
   const [activeTag, setActiveTag] = useState('全部');
   const [searchInput, setSearchInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const tags = ['全部', '热血', '奇幻', '恋爱', '治愈', '搞笑'];
 
   const handleSearch = (keyword: string) => {
@@ -231,8 +233,8 @@ export function HomePage() {
             </Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link to="/" className="text-sm font-semibold text-[#ff6b8a]">首页</Link>
-              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">番剧</Link>
-              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">剧场版</Link>
+              <Link to="/anime-list?type=tv" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">番剧</Link>
+              <Link to="/anime-list?type=剧场版" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">剧场版</Link>
               <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">排行榜</Link>
               <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">新番时间表</Link>
               <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">专题</Link>
@@ -240,6 +242,10 @@ export function HomePage() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={() => setShowImportModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 hover:bg-white/80 text-gray-600 rounded-full text-xs font-medium transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              <span className="hidden sm:inline">导入配置</span>
+            </button>
             <div className="hidden lg:flex items-center bg-white/60 rounded-full px-4 py-2 w-64 border border-[#ff6b8a]/20 focus-within:border-[#ff6b8a]/50 focus-within:bg-white/80 transition-all">
               <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               <input 
@@ -344,6 +350,9 @@ export function HomePage() {
           <RankingPanel />
         </aside>
       </div>
+
+      {/* Import Config Modal */}
+      <ImportConfigModal isOpen={showImportModal} onClose={() => setShowImportModal(false)} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { HomePage } from './pages/home';
 import { SearchPage } from './pages/search';
 import { ProfilePage, FavoritesPage, HistoryPage } from './pages/profile';
 import { AnimeDetailPage } from './pages/anime';
+import { AnimeListPage } from './pages/anime/AnimeListPage';
 import { AdminLayout } from './components/AdminLayout';
 import { AdminRoute } from './components/AdminRoute';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
   {
     path: '/anime/:id',
     element: <AnimeDetailPage />,
+  },
+  {
+    path: '/anime-list',
+    element: <AnimeListPage />,
   },
   {
     path: '/admin',

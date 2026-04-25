@@ -55,6 +55,29 @@ export interface AnimePageResult {
 export interface EpisodeDTO {
   episodeName: string;
   m3u8Url: string;
+  mp4Url?: string;
+}
+
+export interface AutoPlayTaskDTO {
+  taskId: string;
+  sourceName: string;
+  sourceKey: string;
+  iconUrl: string;
+}
+
+export interface AutoPlayImportResultDTO {
+  total: number;
+  imported: number;
+  skipped: number;
+  failed: number;
+  details: string[];
+}
+
+export type TaskStatus = 'pending' | 'loading' | 'success' | 'failed';
+
+export interface TaskStatusDTO extends AutoPlayTaskDTO {
+  status: TaskStatus;
+  source?: PlaySourceDTO;
 }
 
 export interface PlaySourceDTO {

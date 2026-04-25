@@ -1,6 +1,6 @@
 import axiosInstance, { axiosInstanceLongTimeout } from '../utils/api';
 import { Result } from '../types/auth';
-import { AnimeHomeDTO, AnimeDetailDTO, AnimeQueryDTO, PageResult, PlaySourceDTO, WatchHistoryUpdateDTO, UserWatchHistoryDTO, FavoriteAddDTO, FavoriteUpdateDTO, UserFavoriteDTO, DanmakuMessageDTO, DanmakuListDTO, DanmakuSendDTO, DanmakuReportDTO } from '../types/anime';
+import { AnimeHomeDTO, AnimeDetailDTO, AnimeQueryDTO, PageResult, PlaySourceDTO, WatchHistoryUpdateDTO, UserWatchHistoryDTO, FavoriteAddDTO, FavoriteUpdateDTO, UserFavoriteDTO, DanmakuMessageDTO, DanmakuListDTO, DanmakuSendDTO, DanmakuReportDTO, AutoPlayTaskDTO, AutoPlayImportResultDTO } from '../types/anime';
 
 export const animeApi = {
   getAdminRecommendList: async (): Promise<Result<AnimeHomeDTO[]>> => {
@@ -67,6 +67,27 @@ export const animeApi = {
 
   getAnimeSources: async (id: number): Promise<Result<PlaySourceDTO[]>> => {
     const response = await axiosInstanceLongTimeout.get<Result<PlaySourceDTO[]>>(`/api/metadata/play/${id}/sources`);
+    return response.data;
+  },
+
+  autoPlaySearch: async (id: number, keyword: string): Promise<Result<AutoPlayTaskDTO[]>> => {
+    const response = await axiosInstance.get<Result<AutoPlayTaskDTO[]>>('/api/metadata/auto-play/search', {
+      params: { id, keyword },
+    });
+    return response.data;
+  },
+
+  autoPlayTask: async (taskId: string): Promise<Result<PlaySourceDTO>> => {
+    const response = await axiosInstanceLongTimeout.get<Result<PlaySourceDTO>>('/api/metadata/auto-play/task', {
+      params: { taskId },
+    });
+    return response.data;
+  },
+
+  importJsonConfig: async (jsonContent: string): Promise<Result<AutoPlayImportResultDTO>> => {
+    const response = await axiosInstance.post<Result<AutoPlayImportResultDTO>>('/api/metadata/auto-play/import-json', jsonContent, {
+      headers: { 'Content-Type': 'application/json' },
+    });
     return response.data;
   },
 

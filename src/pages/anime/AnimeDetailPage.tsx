@@ -1,25 +1,25 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { animeApi } from '../../api/anime';
-import { AnimeDetailDTO, PlaySourceDTO, EpisodeDTO, DanmakuMessageDTO } from '../../types/anime';
+import { AnimeDetailDTO, PlaySourceDTO, EpisodeDTO, DanmakuMessageDTO, TaskStatusDTO } from '../../types/anime';
 import { VideoPlayer, VideoPlayerRef } from '../../components/VideoPlayer';
 import { DanmakuPlayer } from '../../components/DanmakuPlayer';
 import { DanmakuInput } from '../../components/DanmakuInput';
 import { authStorage } from '../../utils/authStorage';
 import { SakuraPetals } from '../../components/SakuraPetals';
 
+function getEpisodeUrl(episode: EpisodeDTO): string {
+  return episode.m3u8Url || episode.mp4Url || '';
+}
+
 export function AnimeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [animeDetail, setAnimeDetail] = useState<AnimeDetailDTO | null>(null);
-  const [playSources, setPlaySources] = useState<PlaySourceDTO[]>([]);
   const [detailLoading, setDetailLoading] = useState(true);
-  const [sourcesLoading, setSourcesLoading] = useState(true);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [sourcesError, setSourcesError] = useState<string | null>(null);
   const [selectedSource, setSelectedSource] = useState<PlaySourceDTO | null>(null);
-  const [selectedEpisode, setSelectedEpisode] = useState<EpisodeDTO | null>(null);
-  const [showSourceDropdown, setShowSourceDropdown] = useState(false);
+  const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => authStorage.isAuthenticated());
@@ -30,6 +30,14 @@ export function AnimeDetailPage() {
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const videoPlayerRef = useRef<VideoPlayerRef>(null);
+
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatusDTO[]>([]);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [completedTasks, setCompletedTasks] = useState(0);
+  const allDone = totalTasks > 0 && completedTasks >= totalTasks;
+  const successCount = taskStatuses.filter(t => t.status === 'success').length;
+  const failedCount = taskStatuses.filter(t => t.status === 'failed').length;
+  const loadingCount = taskStatuses.filter(t => t.status === 'loading').length;
 
   useEffect(() => { setIsLoggedIn(authStorage.isAuthenticated()); }, []);
 
@@ -49,20 +57,42 @@ export function AnimeDetailPage() {
 
   useEffect(() => {
     const fetchPlaySources = async () => {
-      if (!id) return;
+      if (!id || !animeDetail) return;
       try {
-        setSourcesLoading(true); setSourcesError(null);
-        const response = await animeApi.getAnimeSources(Number(id));
-        if (response.success && response.data) {
-          setPlaySources(response.data);
-          const validSources = response.data.filter(s => s.success && s.episodes.length > 0);
-          if (validSources.length > 0) { setSelectedSource(validSources[0]); if (validSources[0].episodes.length > 0) setSelectedEpisode(validSources[0].episodes[0]); }
-        } else setSourcesError(response.message || '获取播放源失败');
-      } catch { setSourcesError('网络错误，请检查网络连接'); }
-      finally { setSourcesLoading(false); }
+        setTotalTasks(0); setCompletedTasks(0); setTaskStatuses([]); setSelectedSource(null);
+        const searchResp = await animeApi.autoPlaySearch(Number(id), animeDetail.nameCn || animeDetail.name);
+        if (!searchResp.success || !searchResp.data || searchResp.data.length === 0) {
+          return;
+        }
+        const tasks = searchResp.data;
+        setTotalTasks(tasks.length);
+        setTaskStatuses(tasks.map(t => ({ ...t, status: 'loading' as const })));
+
+        const taskPromises = tasks.map(async (task, index) => {
+          try {
+            const result = await animeApi.autoPlayTask(task.taskId);
+            if (result.success && result.data) {
+              const src = result.data;
+              setTaskStatuses(prev => prev.map((s, i) => i === index ? { ...s, status: 'success', source: src } : s));
+              setSelectedSource(prev => {
+                if (!prev) return src;
+                return prev;
+              });
+              setSelectedEpisodeIndex(prev => prev || 0);
+            } else {
+              setTaskStatuses(prev => prev.map((s, i) => i === index ? { ...s, status: 'failed' } : s));
+            }
+          } catch {
+            setTaskStatuses(prev => prev.map((s, i) => i === index ? { ...s, status: 'failed' } : s));
+          }
+          setCompletedTasks(prev => prev + 1);
+        });
+
+        await Promise.all(taskPromises);
+      } catch { console.error('获取播放源失败'); }
     };
     fetchPlaySources();
-  }, [id]);
+  }, [id, animeDetail]);
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -75,33 +105,30 @@ export function AnimeDetailPage() {
 
   useEffect(() => {
     const loadWatchProgress = async () => {
-      if (!id || !selectedEpisode || !isLoggedIn) return;
+      if (!id || !selectedSource || selectedEpisodeIndex < 0 || !isLoggedIn) return;
       try {
-        const episodeIndex = selectedSource?.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode.m3u8Url) ?? 0;
-        const response = await animeApi.getWatchProgress(Number(id), episodeIndex);
+        const response = await animeApi.getWatchProgress(Number(id), selectedEpisodeIndex);
         if (response.success && response.data) setResumeSeconds(response.data.progressSeconds || 0);
       } catch { console.error('加载观看进度失败:'); }
     };
     loadWatchProgress();
-  }, [id, selectedEpisode, selectedSource, isLoggedIn]);
+  }, [id, selectedEpisodeIndex, selectedSource, isLoggedIn]);
 
   useEffect(() => {
-    if (selectedSource && selectedSource.episodes.length > 0) {
-      const currentIndex = selectedSource.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode?.m3u8Url);
-      if (currentIndex === -1) setSelectedEpisode(selectedSource.episodes[0]);
+    if (selectedSource && selectedSource.episodes.length > 0 && selectedEpisodeIndex >= selectedSource.episodes.length) {
+      setSelectedEpisodeIndex(0);
     }
   }, [selectedSource]);
 
   const saveWatchProgress = useCallback(async (progressSeconds: number) => {
-    if (!id || !selectedEpisode || !isLoggedIn || !selectedSource) return;
+    if (!id || selectedEpisodeIndex < 0 || !isLoggedIn || !selectedSource) return;
     const now = Date.now();
     if (now - lastSaveTimeRef.current < 30000 && hasSavedProgressRef.current) return;
     lastSaveTimeRef.current = now; hasSavedProgressRef.current = true;
     try {
-      const episodeIndex = selectedSource.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode.m3u8Url);
-      await animeApi.updateWatchHistory({ metadataId: Number(id), episodeIndex, sourceKey: selectedSource.sourceKey, progressSeconds: Math.floor(progressSeconds) });
+      await animeApi.updateWatchHistory({ metadataId: Number(id), episodeIndex: selectedEpisodeIndex, sourceKey: selectedSource.sourceKey, progressSeconds: Math.floor(progressSeconds) });
     } catch { console.error('保存观看进度失败:'); }
-  }, [id, selectedEpisode, selectedSource, isLoggedIn]);
+  }, [id, selectedEpisodeIndex, selectedSource, isLoggedIn]);
 
   const handleFavoriteToggle = async () => {
     if (!id || !isLoggedIn) { navigate('/login'); return; }
@@ -114,19 +141,17 @@ export function AnimeDetailPage() {
   };
 
   const handleProgressUpdate = (seconds: number) => { saveWatchProgress(seconds); };
-  const handleSourceChange = (source: PlaySourceDTO) => { setSelectedSource(source); setShowSourceDropdown(false); setResumeSeconds(0); hasSavedProgressRef.current = false; if (source.episodes.length > 0) setSelectedEpisode(source.episodes[0]); };
-  const handleEpisodeSelect = (episode: EpisodeDTO) => { setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisode(episode); };
+  const handleSourceChange = (source: PlaySourceDTO) => { setSelectedSource(source); setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisodeIndex(0); };
+  const handleEpisodeSelect = (index: number) => { setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisodeIndex(index); };
 
   const handlePrevEpisode = () => {
-    if (!selectedSource || !selectedEpisode) return;
-    const currentIndex = selectedSource.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode.m3u8Url);
-    if (currentIndex > 0) { setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisode(selectedSource.episodes[currentIndex - 1]); }
+    if (!selectedSource || selectedEpisodeIndex <= 0) return;
+    setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisodeIndex(selectedEpisodeIndex - 1);
   };
 
   const handleNextEpisode = () => {
-    if (!selectedSource || !selectedEpisode) return;
-    const currentIndex = selectedSource.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode.m3u8Url);
-    if (currentIndex < selectedSource.episodes.length - 1) { setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisode(selectedSource.episodes[currentIndex + 1]); }
+    if (!selectedSource || selectedEpisodeIndex >= selectedSource.episodes.length - 1) return;
+    setResumeSeconds(0); hasSavedProgressRef.current = false; setSelectedEpisodeIndex(selectedEpisodeIndex + 1);
   };
 
   const handleDanmakuSendSuccess = useCallback((_danmaku: DanmakuMessageDTO) => {}, []);
@@ -137,10 +162,10 @@ export function AnimeDetailPage() {
   if (detailLoading) return (<div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}><div className="text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-[#ff6b8a]/30 border-t-[#ff6b8a] animate-spin" /><p className="text-gray-400 text-sm">加载中...</p></div></div>);
   if (detailError || !animeDetail) return (<div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}><div className="card p-8 text-center max-w-md w-full"><div className="text-5xl mb-4">😔</div><h2 className="text-xl font-bold text-gray-800 mb-2">加载失败</h2><p className="text-gray-400 text-sm mb-6">{detailError || '动漫不存在'}</p><button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-[#ff6b8a] text-white font-medium rounded-xl hover:bg-[#ff5070] transition-colors">返回上一页</button></div></div>);
 
-  const validSources = playSources.filter(s => s.success && s.episodes.length > 0);
-  const currentEpisodeIndex = selectedSource ? selectedSource.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode?.m3u8Url) : -1;
-  const hasPrev = currentEpisodeIndex > 0;
-  const hasNext = selectedSource ? currentEpisodeIndex < selectedSource.episodes.length - 1 : false;
+  const selectedEpisode = selectedSource && selectedSource.episodes[selectedEpisodeIndex] ? selectedSource.episodes[selectedEpisodeIndex] : null;
+  const currentEpisodeUrl = selectedEpisode ? getEpisodeUrl(selectedEpisode) : '';
+  const hasPrev = selectedEpisodeIndex > 0;
+  const hasNext = selectedSource ? selectedEpisodeIndex < selectedSource.episodes.length - 1 : false;
 
   return (
     <div className="min-h-screen relative" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}>
@@ -165,31 +190,29 @@ export function AnimeDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3 space-y-4">
             <div className="relative">
-              {sourcesLoading ? (
-                <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-10"><div className="w-12 h-12 rounded-full border-4 border-[#ff6b8a]/30 border-t-[#ff6b8a] animate-spin mb-3" /><span className="text-white text-sm">正在获取播放链接...</span><span className="text-white/60 text-xs mt-1">预计需要1分钟左右</span></div>
-                  <img src={animeDetail.imagesLarge} alt={animeDetail.nameCn} className="w-full h-full object-cover opacity-30" />
-                </div>
-              ) : sourcesError || validSources.length === 0 ? (
-                <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-10"><div className="text-4xl mb-3">😔</div><p className="text-white text-sm">{sourcesError || '暂无播放源'}</p></div>
-                  <img src={animeDetail.imagesLarge} alt={animeDetail.nameCn} className="w-full h-full object-cover opacity-30" />
-                </div>
-              ) : (
+              {selectedSource ? (
                 <>
                   <div ref={videoContainerRef} className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden">
-                    <VideoPlayer ref={videoPlayerRef} src={selectedEpisode?.m3u8Url || ''} poster={animeDetail.imagesLarge} startTime={resumeSeconds} onProgressUpdate={handleProgressUpdate} onPauseChange={handleVideoPause} onSizeChange={handleVideoSizeChange} onTimeUpdate={handleVideoTimeUpdate} />
-                    {videoSize.width > 0 && (<DanmakuPlayer videoRef={videoPlayerRef} width={videoSize.width} height={videoSize.height} isPaused={isPaused} videoId={Number(id)} episodeIndex={selectedSource?.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode?.m3u8Url) ?? 0} />)}
+                    <VideoPlayer ref={videoPlayerRef} src={currentEpisodeUrl} poster={animeDetail.imagesLarge} startTime={resumeSeconds} onProgressUpdate={handleProgressUpdate} onPauseChange={handleVideoPause} onSizeChange={handleVideoSizeChange} onTimeUpdate={handleVideoTimeUpdate} />
+                    {videoSize.width > 0 && (<DanmakuPlayer videoRef={videoPlayerRef} width={videoSize.width} height={videoSize.height} isPaused={isPaused} videoId={Number(id)} episodeIndex={selectedEpisodeIndex} />)}
                   </div>
-                  <div className="mt-3"><DanmakuInput videoId={Number(id)} episodeIndex={selectedSource?.episodes.findIndex(ep => ep.m3u8Url === selectedEpisode?.m3u8Url) ?? 0} videoRef={videoPlayerRef} onSendSuccess={handleDanmakuSendSuccess} /></div>
-                  {selectedSource && selectedSource.episodes.length > 1 && (
+                  <div className="mt-3"><DanmakuInput videoId={Number(id)} episodeIndex={selectedEpisodeIndex} videoRef={videoPlayerRef} onSendSuccess={handleDanmakuSendSuccess} /></div>
+                  {selectedSource.episodes.length > 1 && (
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <button onClick={handlePrevEpisode} disabled={!hasPrev} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all ${hasPrev ? 'bg-white/60 text-gray-700 hover:bg-[#ff6b8a]/10 hover:text-[#ff6b8a]' : 'bg-white/30 text-gray-300 cursor-not-allowed'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg><span>上一集</span></button>
-                      <div className="flex-1 text-center"><span className="text-gray-600 text-sm">{selectedEpisode?.episodeName || '选择集数'}</span><span className="text-gray-400 text-sm mx-2">{currentEpisodeIndex + 1} / {selectedSource.episodes.length}</span></div>
+                      <div className="flex-1 text-center"><span className="text-gray-600 text-sm">{selectedEpisode?.episodeName || '选择集数'}</span><span className="text-gray-400 text-sm mx-2">{selectedEpisodeIndex + 1} / {selectedSource.episodes.length}</span></div>
                       <button onClick={handleNextEpisode} disabled={!hasNext} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all ${hasNext ? 'bg-white/60 text-gray-700 hover:bg-[#ff6b8a]/10 hover:text-[#ff6b8a]' : 'bg-white/30 text-gray-300 cursor-not-allowed'}`}><span>下一集</span><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
                     </div>
                   )}
                 </>
+              ) : (
+                <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
+                    <div className="w-14 h-14 rounded-full border-4 border-[#ff6b8a]/30 border-t-[#ff6b8a] animate-spin mb-3" />
+                    <p className="text-gray-500 text-sm">正在获取播放资源...</p>
+                  </div>
+                  <img src={animeDetail.imagesLarge} alt={animeDetail.nameCn} className="w-full h-full object-cover opacity-30" />
+                </div>
               )}
             </div>
 
@@ -215,32 +238,105 @@ export function AnimeDetailPage() {
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4 text-[#ff6b8a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 播放源
-                {sourcesLoading ? (<span className="text-gray-400 text-xs font-normal">(加载中...)</span>) : (<span className="text-gray-400 text-xs font-normal">({validSources.length}个有效)</span>)}
+                {totalTasks > 0 && !allDone && (<span className="text-[#ff6b8a] text-xs font-normal">({successCount}成功 {loadingCount}请求中 {failedCount}失败)</span>)}
+                {allDone && (<span className="text-gray-400 text-xs font-normal">({successCount}个有效)</span>)}
               </h3>
-              {sourcesLoading ? (
-                <div className="flex items-center justify-center py-6"><div className="w-8 h-8 rounded-full border-4 border-[#ff6b8a]/30 border-t-[#ff6b8a] animate-spin" /></div>
-              ) : (
-                <>
-                  <div className="relative mb-3">
-                    <button onClick={() => setShowSourceDropdown(!showSourceDropdown)} disabled={validSources.length === 0} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${validSources.length === 0 ? 'bg-white/30 text-gray-300 cursor-not-allowed' : 'bg-white/60 hover:bg-[#ff6b8a]/10 text-gray-700'}`}>
-                      <span>{selectedSource?.sourceName || '选择播放源'}</span>
-                      {validSources.length > 0 && (<svg className={`w-4 h-4 transition-transform ${showSourceDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>)}
-                    </button>
-                    {showSourceDropdown && validSources.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-[#ff6b8a]/20 overflow-hidden z-10 shadow-lg">
-                        {validSources.map((source) => (<button key={source.sourceKey} onClick={() => handleSourceChange(source)} className={`w-full px-3 py-2.5 text-left text-sm transition-all ${selectedSource?.sourceKey === source.sourceKey ? 'bg-[#ff6b8a]/10 text-[#ff6b8a] font-semibold' : 'text-gray-600 hover:bg-[#ff6b8a]/5'}`}>{source.sourceName}</button>))}
-                      </div>
-                    )}
+
+              {/* Progress bar while loading */}
+              {totalTasks > 0 && !allDone && (
+                <div className="mb-3 p-2.5 bg-[#ff6b8a]/5 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-[#ff6b8a] animate-pulse" />
+                    <span className="text-xs text-gray-500 font-medium">正在获取资源...</span>
                   </div>
-                  {selectedSource && selectedSource.episodes.length > 0 && (
-                    <div>
-                      <h4 className="text-gray-400 text-xs font-semibold mb-2">选集</h4>
-                      <div className="grid grid-cols-4 gap-1.5 max-h-[500px] overflow-y-auto pr-1">
-                        {selectedSource.episodes.map((episode, index) => (<button key={index} onClick={() => handleEpisodeSelect(episode)} className={`px-2 py-2 text-xs rounded-lg transition-all truncate ${selectedEpisode?.m3u8Url === episode.m3u8Url ? 'bg-[#ff6b8a] text-white font-medium' : 'bg-white/60 text-gray-600 hover:bg-[#ff6b8a]/10 hover:text-[#ff6b8a]'}`}>{episode.episodeName}</button>))}
+                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-[#ff6b8a] to-[#ffb6c1] rounded-full transition-all duration-500" style={{ width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Source list - always show, updated in real-time */}
+              {taskStatuses.length > 0 ? (
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                  {taskStatuses.map((task, index) => (
+                    <div key={index} className={`p-2.5 rounded-xl transition-all border ${
+                      selectedSource?.sourceKey === task.source?.sourceKey
+                        ? 'bg-[#ff6b8a]/10 border-[#ff6b8a]/30'
+                        : task.status === 'success' && task.source?.success && task.source.episodes.length > 0
+                          ? 'bg-white/60 border-transparent hover:bg-white/80 cursor-pointer'
+                          : 'bg-white/30 border-transparent'
+                    }`}
+                    onClick={() => {
+                      if (task.source && task.source.success && task.source.episodes.length > 0) {
+                        handleSourceChange(task.source);
+                      }
+                    }}>
+                      <div className="flex items-center gap-2.5">
+                        {/* Icon */}
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                          {task.iconUrl ? (
+                            <img src={task.iconUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          ) : (
+                            <span className="text-xs font-bold text-gray-400">{task.sourceName.charAt(0)}</span>
+                          )}
+                        </div>
+                        {/* Name & Status */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm text-gray-700 truncate">{task.sourceName}</span>
+                            {selectedSource?.sourceKey === task.source?.sourceKey && (
+                              <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#ff6b8a]" />
+                            )}
+                          </div>
+                          {task.status === 'success' && task.source?.success && task.source.episodes.length > 0 && (
+                            <span className="text-xs text-green-500">{task.source.episodes.length}集</span>
+                          )}
+                        </div>
+                        {/* Status badge */}
+                        <div className="flex-shrink-0">
+                          {task.status === 'loading' ? (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-50 rounded-full">
+                              <div className="w-2.5 h-2.5 rounded-full border-2 border-yellow-400 border-t-transparent animate-spin" />
+                              <span className="text-[10px] text-yellow-500">请求中</span>
+                            </div>
+                          ) : task.status === 'success' && task.source?.success && task.source.episodes.length > 0 ? (
+                            <div className="px-2 py-0.5 bg-green-50 rounded-full">
+                              <span className="text-[10px] text-green-500">可用</span>
+                            </div>
+                          ) : task.status === 'success' ? (
+                            <div className="px-2 py-0.5 bg-yellow-50 rounded-full">
+                              <span className="text-[10px] text-yellow-500">无数据</span>
+                            </div>
+                          ) : (
+                            <div className="px-2 py-0.5 bg-red-50 rounded-full">
+                              <span className="text-[10px] text-red-400">失败</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      {/* Episode tags for selected or hovered */}
+                      {task.status === 'success' && task.source?.success && task.source.episodes.length > 0 && selectedSource?.sourceKey === task.source.sourceKey && (
+                        <div className="mt-2 pt-2 border-t border-[#ff6b8a]/10">
+                          <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                            {task.source.episodes.map((ep, epIdx) => (
+                              <button key={epIdx} onClick={(e) => { e.stopPropagation(); handleEpisodeSelect(epIdx); }}
+                                className={`px-2 py-1 text-[11px] rounded-lg transition-all ${selectedEpisodeIndex === epIdx ? 'bg-[#ff6b8a] text-white font-medium' : 'bg-white/60 text-gray-600 hover:bg-[#ff6b8a]/10 hover:text-[#ff6b8a]'}`}>
+                                {ep.episodeName}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full border-4 border-[#ff6b8a]/20 border-t-[#ff6b8a] animate-spin" />
+                    <p className="text-xs text-gray-400">搜索数据源中...</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
