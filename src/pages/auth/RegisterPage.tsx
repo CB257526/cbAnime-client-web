@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { AxiosError } from 'axios';
 import { Result } from '../../types/auth';
+import { SakuraPetals } from '../../components/SakuraPetals';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -95,37 +96,29 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#ff6b9d]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#ffa726]/5 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-[#ffa726]/3 to-transparent rounded-full" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}>
+      <SakuraPetals />
+      
+      <div className="fixed inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'url(/bg-sakura.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
 
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzFhMWE3YyIgc3Ryb2tlLXdpZHRoPSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
-
-      <div className="relative w-full max-w-md">
-        <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br from-[#ffa726]/20 to-[#ff6b9d]/20 border border-[#ffa726]/20 backdrop-blur-sm">
-            <svg className="w-10 h-10 text-[#ffa726]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+      <div className="relative w-full max-w-md z-10">
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <span className="text-3xl">🌸</span>
+            <h1 className="text-3xl font-extrabold text-[#ff6b8a]">
+              Anime<span className="text-xs text-gray-400 font-medium ml-1">Koi</span>
+            </h1>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
-            <span className="text-gradient bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] bg-clip-text text-transparent">注册</span>账号
-          </h1>
-          <p className="text-white/50 text-sm tracking-widest uppercase">Join the Community</p>
+          <p className="text-gray-500 text-sm">加入二次元社区，开始你的旅程</p>
         </div>
 
-        <div className="relative bg-white/[0.03] backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl shadow-black/20 animate-slide-up">
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[#ffa726]/5 via-transparent to-[#ff6b9d]/5" />
-
-          <form onSubmit={handleSubmit} className="relative space-y-5">
+        <div className="relative card p-6 animate-slide-up">
+          <form onSubmit={handleSubmit} className="relative space-y-4">
             {error && (
               <div className="animate-shake">
-                <div className="bg-[#ff4757]/10 border border-[#ff4757]/30 rounded-xl px-4 py-3 text-sm text-[#ff4757] flex items-center gap-2">
+                <div className="bg-[#ff6b8a]/10 border border-[#ff6b8a]/30 rounded-xl px-4 py-3 text-sm text-[#ff6b8a] flex items-center gap-2">
                   <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   {error}
                 </div>
@@ -133,176 +126,84 @@ export function RegisterPage() {
             )}
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/70 mb-2 tracking-wide">
-                用户名
-              </label>
+              <label className="block text-sm font-medium text-gray-600">用户名</label>
               <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] rounded-xl blur opacity-0 group-focus-within:opacity-30 transition duration-300" />
-                <div className="relative flex items-center bg-[#12121a] rounded-xl border border-white/10 group-focus-within:border-[#ffa726]/50 transition-all duration-300">
-                  <svg className="w-5 h-5 ml-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                  </svg>
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-transparent text-white placeholder-white/30 focus:outline-none"
-                    placeholder="3-20位字母、数字或下划线"
-                  />
+                <div className="relative flex items-center bg-white/80 rounded-xl border border-[#ff6b8a]/20 group-focus-within:border-[#ff6b8a]/50 transition-all duration-300">
+                  <svg className="w-5 h-5 ml-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} className="w-full px-3 py-3 bg-transparent text-gray-800 placeholder-gray-300 focus:outline-none text-sm" placeholder="3-20位字母、数字或下划线" />
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/70 mb-2 tracking-wide">
-                邮箱地址
-              </label>
+              <label className="block text-sm font-medium text-gray-600">邮箱地址</label>
               <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] rounded-xl blur opacity-0 group-focus-within:opacity-30 transition duration-300" />
-                <div className="relative flex items-center bg-[#12121a] rounded-xl border border-white/10 group-focus-within:border-[#ffa726]/50 transition-all duration-300">
-                  <svg className="w-5 h-5 ml-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                  </svg>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-transparent text-white placeholder-white/30 focus:outline-none"
-                    placeholder="your@email.com"
-                  />
+                <div className="relative flex items-center bg-white/80 rounded-xl border border-[#ff6b8a]/20 group-focus-within:border-[#ff6b8a]/50 transition-all duration-300">
+                  <svg className="w-5 h-5 ml-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-3 py-3 bg-transparent text-gray-800 placeholder-gray-300 focus:outline-none text-sm" placeholder="your@email.com" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">密码</label>
+                <div className="relative group">
+                  <div className="relative flex items-center bg-white/80 rounded-xl border border-[#ff6b8a]/20 group-focus-within:border-[#ff6b8a]/50 transition-all duration-300">
+                    <svg className="w-5 h-5 ml-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-3 bg-transparent text-gray-800 placeholder-gray-300 focus:outline-none text-sm" placeholder="6-20位密码" />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">确认密码</label>
+                <div className="relative group">
+                  <div className="relative flex items-center bg-white/80 rounded-xl border border-[#ff6b8a]/20 group-focus-within:border-[#ff6b8a]/50 transition-all duration-300">
+                    <svg className="w-5 h-5 ml-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-3 py-3 bg-transparent text-gray-800 placeholder-gray-300 focus:outline-none text-sm" placeholder="再次输入" />
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/70 mb-2 tracking-wide">
-                密码
-              </label>
+              <label className="block text-sm font-medium text-gray-600">验证码</label>
               <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] rounded-xl blur opacity-0 group-focus-within:opacity-30 transition duration-300" />
-                <div className="relative flex items-center bg-[#12121a] rounded-xl border border-white/10 group-focus-within:border-[#ffa726]/50 transition-all duration-300">
-                  <svg className="w-5 h-5 ml-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                  </svg>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-transparent text-white placeholder-white/30 focus:outline-none"
-                    placeholder="6-20位密码"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/70 mb-2 tracking-wide">
-                确认密码
-              </label>
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] rounded-xl blur opacity-0 group-focus-within:opacity-30 transition duration-300" />
-                <div className="relative flex items-center bg-[#12121a] rounded-xl border border-white/10 group-focus-within:border-[#ffa726]/50 transition-all duration-300">
-                  <svg className="w-5 h-5 ml-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                  </svg>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-transparent text-white placeholder-white/30 focus:outline-none"
-                    placeholder="再次输入密码"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/70 mb-2 tracking-wide">
-                验证码
-              </label>
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] rounded-xl blur opacity-0 group-focus-within:opacity-30 transition duration-300" />
-                <div className="relative flex items-center bg-[#12121a] rounded-xl border border-white/10 group-focus-within:border-[#ffa726]/50 transition-all duration-300">
-                  <svg className="w-5 h-5 ml-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                  </svg>
-                  <input
-                    type="text"
-                    value={captchaCode}
-                    onChange={(e) => setCaptchaCode(e.target.value.toUpperCase())}
-                    className="w-32 px-4 py-3.5 bg-transparent text-white placeholder-white/30 focus:outline-none"
-                    placeholder="验证码"
-                    maxLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendCaptcha}
-                    disabled={captchaLoading || captchaCooldown > 0}
-                    className="mr-1 px-4 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] text-white hover:shadow-lg hover:shadow-[#ffa726]/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                  >
+                <div className="relative flex items-center bg-white/80 rounded-xl border border-[#ff6b8a]/20 group-focus-within:border-[#ff6b8a]/50 transition-all duration-300">
+                  <svg className="w-5 h-5 ml-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                  <input type="text" value={captchaCode} onChange={(e) => setCaptchaCode(e.target.value.toUpperCase())} className="w-24 px-3 py-3 bg-transparent text-gray-800 placeholder-gray-300 focus:outline-none text-sm" placeholder="验证码" maxLength={6} />
+                  <button type="button" onClick={handleSendCaptcha} disabled={captchaLoading || captchaCooldown > 0} className="mr-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-gradient-to-r from-[#ff6b8a] to-[#ff8fa3] text-white hover:shadow-lg hover:shadow-[#ff6b8a]/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">
                     {captchaLoading ? '...' : captchaCooldown > 0 ? `${captchaCooldown}s` : '获取'}
                   </button>
                 </div>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="relative group w-full mt-2"
-            >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ffa726] via-[#ff6b9d] to-[#ffa726] rounded-xl blur opacity-70 group-hover:opacity-100 transition duration-300" />
-              <div className="relative flex items-center justify-center py-3.5 bg-gradient-to-r from-[#ffa726] to-[#ff6b9d] rounded-xl text-white font-medium tracking-wide">
+            <button type="submit" disabled={loading} className="relative group w-full">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ff6b8a] to-[#ff8fa3] rounded-xl blur opacity-50 group-hover:opacity-80 transition duration-300" />
+              <div className="relative flex items-center justify-center py-3 bg-gradient-to-r from-[#ff6b8a] to-[#ff8fa3] rounded-xl text-white font-semibold text-sm">
                 {loading ? (
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                  </svg>
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
                 ) : '创建账号'}
               </div>
             </button>
           </form>
 
-          <div className="relative mt-8 pt-6 border-t border-white/5 text-center">
-            <p className="text-sm text-white/40">
-              已有账号？{' '}
-              <Link to="/login" className="text-[#ffa726] hover:text-[#ff6b9d] transition-colors duration-300">
-                立即登录
-              </Link>
-            </p>
+          <div className="relative mt-5 pt-4 border-t border-[#ff6b8a]/10 text-center">
+            <p className="text-sm text-gray-500">已有账号？{' '}<Link to="/login" className="text-[#ff6b8a] hover:text-[#ff5070] font-medium transition-colors">立即登录</Link></p>
           </div>
         </div>
 
-        <p className="text-center text-white/20 text-xs mt-8 tracking-widest">
-          © 2024 CB Anime · 二次元爱好者的聚集地
-        </p>
+        <p className="text-center text-gray-400 text-xs mt-6">© 2024 Anime Koi · 二次元爱好者的聚集地</p>
       </div>
 
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .animate-fade-in { animation: fade-in 0.6s ease-out; }
         .animate-slide-up { animation: slide-up 0.6s ease-out 0.2s both; }
         .animate-shake { animation: shake 0.3s ease-out; }
-        .bg-gradient-radial {
-          background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-via, transparent), var(--tw-gradient-to));
-        }
-        .text-gradient {
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
       `}</style>
     </div>
   );

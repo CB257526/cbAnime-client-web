@@ -1,13 +1,185 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authApi } from '../../api/auth';
-import { animeApi } from '../../api/anime';
 import { authStorage } from '../../utils/authStorage';
-import { BannerCarousel } from '../../components/BannerCarousel';
-import { AnimeGrid } from '../../components/AnimeCard';
-import { SearchBar } from '../../components/SearchBar';
-import { Live2DWidget } from '../../components/Live2DWidget';
+import { animeApi } from '../../api/anime';
 import { AnimeHomeDTO } from '../../types/anime';
+import { SakuraPetals } from '../../components/SakuraPetals';
+import { Live2DWidget } from '../../components/Live2DWidget';
+
+function BannerCarousel({ banners }: { banners: AnimeHomeDTO[] }) {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
+
+  if (banners.length === 0) return null;
+  const banner = banners[current];
+
+  return (
+    <div className="carousel-slide relative overflow-hidden rounded-2xl">
+      <img src={banner.imagesLarge} alt={banner.nameCn} className="w-full h-full object-cover" />
+      <div className="overlay" />
+      <div className="content">
+        <div className="inline-block px-3 py-1 bg-[#ff6b8a]/80 text-white text-xs rounded-full mb-3">本周热门推荐</div>
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{banner.nameCn}</h2>
+        <p className="text-white/70 text-sm mb-4 line-clamp-2">十年后，世界与其他次元之间的"门"被打开，各类魔物不断出现，人类因此觉醒了特殊能力。</p>
+        <div className="flex items-center gap-3">
+          <Link to={`/anime/${banner.id}`} className="flex items-center gap-2 px-6 py-2.5 bg-[#ff6b8a] hover:bg-[#ff5070] text-white rounded-full text-sm font-semibold transition-colors">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.841z" /></svg>
+            立即观看
+          </Link>
+          <button className="px-6 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm backdrop-blur-sm transition-colors">播放预告</button>
+        </div>
+      </div>
+      {banners.length > 1 && (
+        <>
+          <button onClick={() => setCurrent(prev => (prev - 1 + banners.length) % banners.length)} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button onClick={() => setCurrent(prev => (prev + 1) % banners.length)} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </>
+      )}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        {banners.map((_, index) => (
+          <button key={index} onClick={() => setCurrent(index)} className={`transition-all duration-300 rounded-full ${index === current ? 'bg-[#ff6b8a] w-8 h-2' : 'bg-white/50 w-2 h-2'}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AnimeCard({ anime }: { anime: AnimeHomeDTO }) {
+  return (
+    <Link to={`/anime/${anime.id}`} className="anime-card block">
+      <div className="relative overflow-hidden rounded-xl">
+        <img src={anime.imagesLarge} alt={anime.nameCn} className="card-img w-full aspect-[3/4] object-cover" />
+        <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#ff6b8a] text-white text-xs font-bold rounded-md shadow">{anime.score.toFixed(1)}</div>
+      </div>
+      <div className="mt-2">
+        <p className="text-sm font-medium text-gray-800 truncate">{anime.nameCn}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{anime.airDate}</p>
+      </div>
+    </Link>
+  );
+}
+
+function SchedulePanel() {
+  const days = ['一', '二', '三', '四', '五', '六', '日'];
+  const [selectedDay, setSelectedDay] = useState(4);
+  const [loading, setLoading] = useState(false);
+  const [scheduleList, setScheduleList] = useState<AnimeHomeDTO[]>([]);
+
+  useEffect(() => {
+    setLoading(true);
+    animeApi.getLatestList(5).then(res => {
+      if (res.success && res.data) setScheduleList(res.data);
+      setLoading(false);
+    });
+  }, [selectedDay]);
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="section-title"><span>🌸</span>新番时间表</h3>
+        <button className="text-[#ff6b8a] text-xs hover:opacity-70">更多 ›</button>
+      </div>
+      <div className="flex items-center justify-between mb-3">
+        {days.map((day, i) => (
+          <button key={day} onClick={() => setSelectedDay(i)} className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${i === selectedDay ? 'bg-[#ff6b8a] text-white shadow-lg shadow-[#ff6b8a]/30' : 'text-gray-400 hover:bg-[#ff6b8a]/10'}`}>
+            {day}
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => (<div key={i} className="flex items-center gap-2"><div className="w-10 h-6 skeleton" /><div className="w-10 h-14 skeleton" /><div className="flex-1"><div className="h-3 skeleton w-24" /><div className="h-2.5 skeleton w-16 mt-1" /></div></div>))}</div>
+      ) : (
+        <div className="space-y-2">
+          {scheduleList.slice(0, 4).map((item, i) => (
+            <Link key={item.id} to={`/anime/${item.id}`} className="schedule-item group p-2 rounded-lg hover:bg-[#ff6b8a]/5 transition-colors">
+              <span className="text-xs text-gray-400 w-10 flex-shrink-0">{i * 2 + 17}:00</span>
+              <div className="w-10 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                <img src={item.imagesLarge} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0 ml-1">
+                <p className="text-xs text-gray-700 truncate group-hover:text-[#ff6b8a] transition-colors">{item.nameCn}</p>
+                <p className="text-[10px] text-gray-400">更新至 第{i + 1}集</p>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[#ff6b8a]/10 text-[#ff6b8a] rounded-full flex-shrink-0">更新</span>
+            </Link>
+          ))}
+        </div>
+      )}
+      <button className="w-full mt-3 py-2 text-xs text-[#ff6b8a] border border-[#ff6b8a]/20 rounded-lg hover:bg-[#ff6b8a]/5 transition-colors">📅 查看完整时间表 ›</button>
+    </div>
+  );
+}
+
+function RankingPanel() {
+  const [activeTab, setActiveTab] = useState('日榜');
+  const [rankingList, setRankingList] = useState<AnimeHomeDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+  const tabs = ['日榜', '周榜', '月榜', '总榜'];
+
+  useEffect(() => {
+    setLoading(true);
+    animeApi.getPopularList(7).then(res => {
+      if (res.success && res.data) setRankingList(res.data);
+      setLoading(false);
+    });
+  }, [activeTab]);
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="section-title"><span>🌸</span>人气排行榜</h3>
+        <button className="text-[#ff6b8a] text-xs hover:opacity-70">更多 ›</button>
+      </div>
+      <div className="flex gap-2 mb-3 overflow-x-auto">
+        {tabs.map(tab => (<button key={tab} onClick={() => setActiveTab(tab)} className={`tag-btn ${activeTab === tab ? 'active' : ''}`}>{tab}</button>))}
+      </div>
+      {loading ? (
+        <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => (<div key={i} className="flex items-center gap-2"><div className="w-6 h-6 skeleton rounded" /><div className="w-10 h-14 skeleton" /><div className="flex-1"><div className="h-3 skeleton w-24" /><div className="h-2.5 skeleton w-16 mt-1" /></div><div className="h-3 skeleton w-6" /></div>))}</div>
+      ) : (
+        <div className="space-y-1">
+          {rankingList.slice(0, 7).map((item, index) => (
+            <Link key={item.id} to={`/anime/${item.id}`} className="flex items-center gap-2 py-1.5 group">
+              <span className={`rank-number ${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}`}>{index + 1}</span>
+              <div className="w-10 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                <img src={item.imagesLarge} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-700 truncate group-hover:text-[#ff6b8a] transition-colors">{item.nameCn}</p>
+                <p className="text-[10px] text-gray-400">更新至 第{index + 1}集</p>
+              </div>
+              <span className="text-[#ff6b8a] font-bold text-xs flex-shrink-0">{item.score.toFixed(1)}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const navItems = [
+  { label: '首页', path: '/', icon: 'M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z' },
+  { label: '我的追番', path: '/profile/favorites', icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
+  { label: '观看记录', path: '/profile/history', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { label: '收藏列表', path: '/profile/favorites', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
+  { label: '下载管理', path: '/', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
+];
+
+const categories = [
+  { name: '热血', icon: '🔥' }, { name: '冒险', icon: '⚔️' }, { name: '奇幻', icon: '✨' },
+  { name: '恋爱', icon: '💕' }, { name: '搞笑', icon: '😂' }, { name: '治愈', icon: '🌿' },
+  { name: '校园', icon: '🏫' }, { name: '科幻', icon: '🚀' },
+];
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -16,162 +188,162 @@ export function HomePage() {
   const [latestList, setLatestList] = useState<AnimeHomeDTO[]>([]);
   const [recommendList, setRecommendList] = useState<AnimeHomeDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userNickname, setUserNickname] = useState('');
+  const [activeTag, setActiveTag] = useState('全部');
+  const [searchInput, setSearchInput] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const tags = ['全部', '热血', '奇幻', '恋爱', '治愈', '搞笑'];
 
-  useEffect(() => {
-    if (!authStorage.isAuthenticated()) {
-      navigate('/login');
-      return;
-    }
-
-    const user = authStorage.getUser();
-    if (user) {
-      setUserNickname(user.nickname);
-    }
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [bannerRes, popularRes, latestRes, recommendRes] = await Promise.all([
-          animeApi.getAdminRecommendList(),
-          animeApi.getPopularList(12),
-          animeApi.getLatestList(12),
-          animeApi.getRecommendList(12),
-        ]);
-
-        if (bannerRes.success && bannerRes.data) {
-          setBanners(bannerRes.data);
-        }
-        if (popularRes.success && popularRes.data) {
-          setPopularList(popularRes.data);
-        }
-        if (latestRes.success && latestRes.data) {
-          setLatestList(latestRes.data);
-        }
-        if (recommendRes.success && recommendRes.data) {
-          setRecommendList(recommendRes.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [navigate]);
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-    } finally {
-      authStorage.clearAll();
-      navigate('/login');
+  const handleSearch = (keyword: string) => {
+    if (keyword.trim()) {
+      navigate(`/search?q=${encodeURIComponent(keyword.trim())}`);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      <header className="sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold tracking-tight">
-                <span className="text-white">CB </span>
-                <span className="text-gradient bg-gradient-to-r from-[#ff6b9d] to-[#ffa726] bg-clip-text text-transparent">Anime</span>
-              </h1>
-              <div className="hidden lg:block w-80">
-                <SearchBar size="sm" />
-              </div>
-              <nav className="hidden md:flex items-center gap-6">
-                <a href="/" className="text-sm text-white relative group">
-                  <span className="relative z-10">首页</span>
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#ff6b9d] to-[#ffa726] group-hover:w-full transition-all duration-300" />
-                </a>
-                <Link to="/profile/favorites" className="text-sm text-white/50 hover:text-white transition-colors">
-                  我的收藏
-                </Link>
-                <Link to="/profile/history" className="text-sm text-white/50 hover:text-white transition-colors">
-                  观看记录
-                </Link>
-                <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">
-                  排行榜
-                </a>
-              </nav>
-            </div>
+  useEffect(() => {
+    if (authStorage.isAuthenticated()) {
+      setIsLoggedIn(true);
+    }
+    setLoading(true);
+    Promise.all([animeApi.getAdminRecommendList(), animeApi.getPopularList(12), animeApi.getLatestList(12), animeApi.getRecommendList(12)]).then(([b, p, l, r]) => {
+      if (b.success && b.data) setBanners(b.data);
+      if (p.success && p.data) setPopularList(p.data);
+      if (l.success && l.data) setLatestList(l.data);
+      if (r.success && r.data) setRecommendList(r.data);
+      setLoading(false);
+    });
+  }, [navigate]);
 
-            <div className="flex items-center gap-4">
-              <Link
-                to="/profile"
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              >
-                <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#ff6b9d]/20 to-[#ffa726]/20 border border-[#ff6b9d]/30 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gradient bg-gradient-to-r from-[#ff6b9d] to-[#ffa726] bg-clip-text text-transparent">
-                      {userNickname ? userNickname[0].toUpperCase() : 'U'}
-                    </span>
-                  </div>
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#ff6b9d]/20 to-[#ffa726]/20 blur-lg opacity-50" />
-                </div>
-                <span className="text-sm text-white/70 hidden sm:block">{userNickname}</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1.5 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300"
-              >
-                退出
-              </button>
+  return (
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'url(/bg-sakura.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+      <div className="fixed inset-0 bg-gradient-to-br from-[#fff5f7]/80 via-[#ffe8ed]/70 to-[#ffe0e8]/80 pointer-events-none z-0" />
+      <SakuraPetals />
+      <Live2DWidget />
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 glass mx-3 mt-2 mb-4 px-5 py-2.5 rounded-2xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-2xl">🌸</span>
+              <span className="text-xl font-extrabold text-[#ff6b8a]">Anime</span>
+              <span className="text-xs text-gray-400 font-medium">Koi</span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-6">
+              <Link to="/" className="text-sm font-semibold text-[#ff6b8a]">首页</Link>
+              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">番剧</Link>
+              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">剧场版</Link>
+              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">排行榜</Link>
+              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">新番时间表</Link>
+              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">专题</Link>
+              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">资讯</Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center bg-white/60 rounded-full px-4 py-2 w-64 border border-[#ff6b8a]/20 focus-within:border-[#ff6b8a]/50 focus-within:bg-white/80 transition-all">
+              <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input 
+                type="text" 
+                placeholder="搜索番剧、角色、作者..." 
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchInput); }}
+                className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none" 
+              />
             </div>
+            <button onClick={() => navigate('/profile/favorites')} className="w-9 h-9 rounded-full bg-white/60 hover:bg-white/80 flex items-center justify-center text-gray-500 transition-colors" title="收藏列表">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+            <button onClick={() => navigate('/profile/history')} className="w-9 h-9 rounded-full bg-white/60 hover:bg-white/80 flex items-center justify-center text-gray-500 transition-colors" title="观看记录">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </button>
+            <button className="w-9 h-9 rounded-full bg-white/60 hover:bg-white/80 flex items-center justify-center text-gray-500 transition-colors" title="通知">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            </button>
+            {isLoggedIn ? (
+              <Link to="/profile" className="flex items-center gap-2 pl-2 pr-3 py-1.5 bg-[#ff6b8a] hover:bg-[#ff5070] text-white rounded-full text-sm font-semibold transition-colors">
+                <div className="w-7 h-7 rounded-full bg-white/30 flex items-center justify-center"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg></div>
+                <span className="hidden sm:inline">个人中心</span>
+              </Link>
+            ) : (
+              <Link to="/login" className="flex items-center gap-2 pl-3 pr-4 py-1.5 bg-[#ff6b8a] hover:bg-[#ff5070] text-white rounded-full text-sm font-semibold transition-colors">
+                <div className="w-7 h-7 rounded-full bg-white/30 flex items-center justify-center"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg></div>
+                <span className="hidden sm:inline">登录 / 注册</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <section className="mb-12 animate-fade-in">
-          <BannerCarousel banners={banners} autoPlayInterval={5000} />
-        </section>
+      {/* 3-Column Layout */}
+      <div className="flex gap-4 px-3 pb-8 max-w-[1600px] mx-auto relative z-10">
+        {/* Left Sidebar */}
+        <aside className="w-44 flex-shrink-0 hidden xl:block">
+          <div className="card p-2.5 space-y-0.5">
+            {navItems.map(item => (
+              <Link key={item.label} to={item.path} className={`nav-item ${item.label === '首页' ? 'active' : ''}`}>
+                <svg className="w-4.5 h-4.5 flex-shrink-0" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} /></svg>
+                <span className="text-sm">{item.label}</span>
+              </Link>
+            ))}
+            <div className="pt-2 mt-2 border-t border-[#ff6b8a]/10">
+              <p className="text-xs font-semibold text-gray-400 mb-1.5 px-3">分类</p>
+              {categories.map(cat => (<div key={cat.name} className="category-item"><span>{cat.icon}</span><span>{cat.name}</span></div>))}
+              <div className="category-item text-[#ff6b8a]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg><span>更多分类</span></div>
+            </div>
+            {!isLoggedIn && (
+              <div className="mt-3 p-3 bg-gradient-to-br from-[#ff6b8a]/10 to-[#ffb6c1]/10 rounded-xl text-center">
+                <div className="text-3xl mb-2 float">🌸</div>
+                <p className="text-xs text-gray-500 mb-2">登录享受更多精彩内容</p>
+                <Link to="/login" className="inline-block px-4 py-1.5 bg-[#ff6b8a] text-white text-xs rounded-full hover:bg-[#ff5070] transition-colors">立即登录</Link>
+              </div>
+            )}
+          </div>
+        </aside>
 
-        <section className="mb-12 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <AnimeGrid title="热门推荐" animeList={popularList} loading={loading} />
-        </section>
-
-        <section className="mb-12 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <AnimeGrid title="最新上架" animeList={latestList} loading={loading} />
-        </section>
-
-        <section className="mb-12 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <AnimeGrid title="编辑推荐" animeList={recommendList} loading={loading} />
-        </section>
-      </main>
-
-      <footer className="bg-[#12121a]/50 border-t border-white/5 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm text-white/30">
-            © 2024 <span className="text-gradient bg-gradient-to-r from-[#ff6b9d]/50 to-[#ffa726]/50 bg-clip-text text-transparent">CB Anime</span> · 二次元爱好者的聚集地
-          </p>
+        {/* Bottom Left Character */}
+        <div className="fixed bottom-0 left-0 z-10 pointer-events-none hidden xl:block" style={{ width: '320px' }}>
+          <img src="/sakura-character.png" alt="" className="w-full" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         </div>
-      </footer>
 
-      <Live2DWidget />
+        {/* Main Content */}
+        <main className="flex-1 min-w-0 space-y-5">
+          <section className="fade-up"><BannerCarousel banners={banners} /></section>
 
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in { animation: fade-in 0.6s ease-out; }
-        .animate-slide-up { animation: slide-up 0.6s ease-out both; }
-        .text-gradient {
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-      `}</style>
+          <section className="card p-4 fade-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title"><span>🌸</span>今日推荐</h2>
+              <div className="flex items-center gap-1.5">
+                {tags.map(tag => (<button key={tag} onClick={() => setActiveTag(tag)} className={`tag-btn ${activeTag === tag ? 'active' : ''}`}>{tag}</button>))}
+                <button className="text-[#ff6b8a] text-xs ml-1 hover:opacity-70">更多 ›</button>
+              </div>
+            </div>
+            {loading ? (<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">{Array.from({ length: 6 }).map((_, i) => (<div key={i} className="space-y-2"><div className="skeleton aspect-[3/4] rounded-xl" /><div className="skeleton h-3 w-3/4 rounded" /></div>))}</div>) : (<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">{popularList.slice(0, 12).map(anime => (<AnimeCard key={anime.id} anime={anime} />))}</div>)}
+          </section>
+
+          <section className="card p-4 fade-up" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title"><span>🌸</span>新番速递</h2>
+              <button className="text-[#ff6b8a] text-xs hover:opacity-70">更多 ›</button>
+            </div>
+            {loading ? (<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">{Array.from({ length: 6 }).map((_, i) => (<div key={i} className="space-y-2"><div className="skeleton aspect-[3/4] rounded-xl" /><div className="skeleton h-3 w-3/4 rounded" /></div>))}</div>) : (<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">{latestList.slice(0, 6).map(anime => (<AnimeCard key={anime.id} anime={anime} />))}</div>)}
+          </section>
+
+          <section className="card p-4 fade-up" style={{ animationDelay: '0.3s' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title"><span>🌸</span>编辑推荐</h2>
+              <button className="text-[#ff6b8a] text-xs hover:opacity-70">更多 ›</button>
+            </div>
+            {loading ? (<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">{Array.from({ length: 6 }).map((_, i) => (<div key={i} className="space-y-2"><div className="skeleton aspect-[3/4] rounded-xl" /><div className="skeleton h-3 w-3/4 rounded" /></div>))}</div>) : (<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">{recommendList.slice(0, 6).map(anime => (<AnimeCard key={anime.id} anime={anime} />))}</div>)}
+          </section>
+        </main>
+
+        {/* Right Sidebar */}
+        <aside className="w-64 flex-shrink-0 hidden lg:block space-y-4">
+          <SchedulePanel />
+          <RankingPanel />
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,53 +11,216 @@
 }
 
 body {
-  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%);
+  color: #3a3a4a;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0f;
+  background: rgba(255, 182, 193, 0.1);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ff6b9d 0%, #ffa726 100%);
-  border-radius: 4px;
+  background: linear-gradient(180deg, #ff8fa3 0%, #ffb6c1 100%);
+  border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #ff6b9d 0%, #ffa726 100%);
+@keyframes sakura-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-5vh) rotate(0deg) translateX(0);
+  }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% {
+    opacity: 0;
+    transform: translateY(105vh) rotate(720deg) translateX(80px);
+  }
 }
 
-.text-gradient {
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.sakura-petal {
+  position: fixed;
+  top: -20px;
+  width: 10px;
+  height: 10px;
+  background: #ffb6c1;
+  border-radius: 50% 0 50% 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
 }
 
-.bg-gradient-radial {
-  background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-via, transparent), var(--tw-gradient-to));
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 182, 193, 0.3);
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+.card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 182, 193, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(255, 107, 157, 0.08);
 }
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #3a3a4a;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+.tag-btn {
+  padding: 4px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.tag-btn.active {
+  background: linear-gradient(135deg, #ff6b8a, #ff8fa3);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.35);
+}
+
+.tag-btn:not(.active) {
+  background: rgba(255, 255, 255, 0.7);
+  color: #888;
+}
+
+.tag-btn:not(.active):hover {
+  background: rgba(255, 182, 193, 0.2);
+  color: #ff6b8a;
+}
+
+.anime-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anime-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(255, 107, 157, 0.2);
+}
+
+.anime-card:hover .card-img {
+  transform: scale(1.08);
+}
+
+.card-img {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rank-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank-number.rank-1 {
+  background: linear-gradient(135deg, #ff6b8a, #ff8fa3);
+  color: white;
+}
+
+.rank-number.rank-2 {
+  background: linear-gradient(135deg, #ffa726, #ffb74d);
+  color: white;
+}
+
+.rank-number.rank-3 {
+  background: linear-gradient(135deg, #66bb6a, #81c784);
+  color: white;
+}
+
+.rank-number:not(.rank-1):not(.rank-2):not(.rank-3) {
+  background: rgba(0, 0, 0, 0.06);
+  color: #aaa;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #777;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.nav-item:hover {
+  background: rgba(255, 182, 193, 0.12);
+  color: #ff6b8a;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.12), rgba(255, 182, 193, 0.12));
+  color: #ff6b8a;
+  font-weight: 600;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-item:hover {
+  background: rgba(255, 182, 193, 0.1);
+  color: #ff6b8a;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fade-up 0.5s ease-out both;
 }
 
 @keyframes shimmer {
@@ -65,12 +228,45 @@ body {
   100% { background-position: 200% 0; }
 }
 
-.animate-fade-in { animation: fade-in 0.6s ease-out; }
-.animate-slide-up { animation: slide-up 0.6s ease-out both; }
-.animate-shake { animation: shake 0.3s ease-out; }
-
 .skeleton {
-  background: linear-gradient(90deg, #12121a 25%, #1a1a25 50%, #12121a 75%);
+  background: linear-gradient(90deg, #f5e6ea 25%, #fce4ec 50%, #f5e6ea 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.carousel-slide {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  aspect-ratio: 2.4/1;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-slide .overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+}
+
+.carousel-slide .content {
+  position: absolute;
+  left: 40px;
+  bottom: 40px;
+  color: white;
+  max-width: 500px;
 }
