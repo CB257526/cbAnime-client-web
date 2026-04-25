@@ -195,12 +195,6 @@ const navItems = [
   { label: '下载管理', path: '/', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
 ];
 
-const categories = [
-  { name: '热血', icon: '🔥' }, { name: '冒险', icon: '⚔️' }, { name: '奇幻', icon: '✨' },
-  { name: '恋爱', icon: '💕' }, { name: '搞笑', icon: '😂' }, { name: '治愈', icon: '🌿' },
-  { name: '校园', icon: '🏫' }, { name: '科幻', icon: '🚀' },
-];
-
 export function HomePage() {
   const navigate = useNavigate();
   const [banners, setBanners] = useState<AnimeHomeDTO[]>([]);
@@ -254,10 +248,7 @@ export function HomePage() {
               <Link to="/" className="text-sm font-semibold text-[#ff6b8a]">首页</Link>
               <Link to="/anime-list?type=tv" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">番剧</Link>
               <Link to="/anime-list?type=剧场版" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">剧场版</Link>
-              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">排行榜</Link>
               <Link to="/schedule" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">新番时间表</Link>
-              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">专题</Link>
-              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">资讯</Link>
             </nav>
           </div>
           <div className="flex items-center gap-3">
@@ -311,11 +302,6 @@ export function HomePage() {
                 <span className="text-sm">{item.label}</span>
               </Link>
             ))}
-            <div className="pt-2 mt-2 border-t border-[#ff6b8a]/10">
-              <p className="text-xs font-semibold text-gray-400 mb-1.5 px-3">分类</p>
-              {categories.map(cat => (<div key={cat.name} className="category-item"><span>{cat.icon}</span><span>{cat.name}</span></div>))}
-              <div className="category-item text-[#ff6b8a]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg><span>更多分类</span></div>
-            </div>
             {!isLoggedIn && (
               <div className="mt-3 p-3 bg-gradient-to-br from-[#ff6b8a]/10 to-[#ffb6c1]/10 rounded-xl text-center">
                 <div className="text-3xl mb-2 float">🌸</div>
