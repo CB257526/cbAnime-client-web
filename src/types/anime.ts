@@ -73,6 +73,45 @@ export interface AutoPlayImportResultDTO {
   details: string[];
 }
 
+export interface BangumiWeekday {
+  en: string;
+  cn: string;
+  ja: string;
+  id: number;
+}
+
+export interface BangumiSubject {
+  id: number;
+  url: string;
+  type: number;
+  name: string;
+  name_cn: string;
+  summary: string;
+  air_date: string;
+  air_weekday: number;
+  rating: {
+    total: number;
+    count: Record<string, number>;
+    score: number;
+  };
+  rank: number;
+  images?: {
+    large?: string;
+    common?: string;
+    medium?: string;
+    small?: string;
+    grid?: string;
+  } | null;
+  collection: {
+    doing: number;
+  };
+}
+
+export interface BangumiCalendarDay {
+  weekday: BangumiWeekday;
+  items: BangumiSubject[];
+}
+
 export type TaskStatus = 'pending' | 'loading' | 'success' | 'failed';
 
 export interface TaskStatusDTO extends AutoPlayTaskDTO {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authStorage } from '../../utils/authStorage';
 import { animeApi } from '../../api/anime';
-import { AnimeHomeDTO } from '../../types/anime';
+import { AnimeHomeDTO, BangumiCalendarDay, BangumiSubject } from '../../types/anime';
 import { SakuraPetals } from '../../components/SakuraPetals';
 import { Live2DWidget } from '../../components/Live2DWidget';
 import { ImportConfigModal } from '../../components/ImportConfigModal';
@@ -73,17 +73,25 @@ function AnimeCard({ anime }: { anime: AnimeHomeDTO }) {
 
 function SchedulePanel() {
   const days = ['一', '二', '三', '四', '五', '六', '日'];
-  const [selectedDay, setSelectedDay] = useState(4);
-  const [loading, setLoading] = useState(false);
-  const [scheduleList, setScheduleList] = useState<AnimeHomeDTO[]>([]);
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const [selectedDay, setSelectedDay] = useState(todayIdx);
+  const [loading, setLoading] = useState(true);
+  const [calendarData, setCalendarData] = useState<BangumiCalendarDay[]>([]);
 
   useEffect(() => {
     setLoading(true);
-    animeApi.getLatestList(5).then(res => {
-      if (res.success && res.data) setScheduleList(res.data);
-      setLoading(false);
-    });
-  }, [selectedDay]);
+    fetch('https://api.bgm.tv/calendar', { headers: { 'Accept': 'application/json' } })
+      .then(res => res.json())
+      .then((data: BangumiCalendarDay[]) => {
+        setCalendarData(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const bgmDayIdx = selectedDay + 1;
+  const currentDay = calendarData.find(d => d.weekday.id === bgmDayIdx);
+  const items = currentDay?.items || [];
 
   return (
     <div className="card p-4">
@@ -100,24 +108,35 @@ function SchedulePanel() {
       </div>
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => (<div key={i} className="flex items-center gap-2"><div className="w-10 h-6 skeleton" /><div className="w-10 h-14 skeleton" /><div className="flex-1"><div className="h-3 skeleton w-24" /><div className="h-2.5 skeleton w-16 mt-1" /></div></div>))}</div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-6">
+          <div className="text-3xl mb-2">📺</div>
+          <p className="text-xs text-gray-400">当天暂无番剧</p>
+        </div>
       ) : (
-        <div className="space-y-2">
-          {scheduleList.slice(0, 4).map((item, i) => (
+        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+          {items.map((item: BangumiSubject, i: number) => (
             <Link key={item.id} to={`/anime/${item.id}`} className="schedule-item group p-2 rounded-lg hover:bg-[#ff6b8a]/5 transition-colors">
-              <span className="text-xs text-gray-400 w-10 flex-shrink-0">{i * 2 + 17}:00</span>
+              <span className="text-xs text-gray-400 w-10 flex-shrink-0">{String(i * 2 + 17).padStart(2, '0')}:00</span>
               <div className="w-10 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                <img src={item.imagesLarge} alt="" className="w-full h-full object-cover" />
+                {item.images?.large ? (
+                  <img src={item.images.large} alt={item.name_cn || item.name} className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-0 ml-1">
-                <p className="text-xs text-gray-700 truncate group-hover:text-[#ff6b8a] transition-colors">{item.nameCn}</p>
-                <p className="text-[10px] text-gray-400">更新至 第{i + 1}集</p>
+                <p className="text-xs text-gray-700 truncate group-hover:text-[#ff6b8a] transition-colors">{item.name_cn || item.name}</p>
+                <p className="text-[10px] text-gray-400">评分 {item.rating?.score?.toFixed(1) || 'N/A'}</p>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 bg-[#ff6b8a]/10 text-[#ff6b8a] rounded-full flex-shrink-0">更新</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[#ff6b8a]/10 text-[#ff6b8a] rounded-full flex-shrink-0">{item.collection?.doing || 0}人在看</span>
             </Link>
           ))}
         </div>
       )}
-      <button className="w-full mt-3 py-2 text-xs text-[#ff6b8a] border border-[#ff6b8a]/20 rounded-lg hover:bg-[#ff6b8a]/5 transition-colors">📅 查看完整时间表 ›</button>
+      <Link to="/schedule" className="w-full mt-3 py-2 text-xs text-[#ff6b8a] border border-[#ff6b8a]/20 rounded-lg hover:bg-[#ff6b8a]/5 transition-colors block text-center">📅 查看完整时间表 ›</Link>
     </div>
   );
 }
@@ -236,7 +255,7 @@ export function HomePage() {
               <Link to="/anime-list?type=tv" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">番剧</Link>
               <Link to="/anime-list?type=剧场版" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">剧场版</Link>
               <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">排行榜</Link>
-              <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">新番时间表</Link>
+              <Link to="/schedule" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">新番时间表</Link>
               <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">专题</Link>
               <Link to="/" className="text-sm text-gray-500 hover:text-[#ff6b8a] transition-colors">资讯</Link>
             </nav>

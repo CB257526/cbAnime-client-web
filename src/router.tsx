@@ -5,6 +5,7 @@ import { SearchPage } from './pages/search';
 import { ProfilePage, FavoritesPage, HistoryPage } from './pages/profile';
 import { AnimeDetailPage } from './pages/anime';
 import { AnimeListPage } from './pages/anime/AnimeListPage';
+import { SchedulePage } from './pages/schedule/SchedulePage';
 import { AdminLayout } from './components/AdminLayout';
 import { AdminRoute } from './components/AdminRoute';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
   {
     path: '/anime-list',
     element: <AnimeListPage />,
+  },
+  {
+    path: '/schedule',
+    element: <SchedulePage />,
   },
   {
     path: '/admin',
