@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'ax
 import { Result, TokenDTO } from '../types/auth';
 import { authStorage } from './authStorage';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const TOKEN_EXPIRE_BUFFER = 5 * 60 * 1000;
 
 export const axiosInstance = axios.create({
