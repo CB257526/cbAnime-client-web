@@ -33,7 +33,19 @@ export function ProfilePage() {
   const getGenderText = (gender: number) => gender === 0 ? '保密' : gender === 1 ? '男' : gender === 2 ? '女' : '未知';
 
   if (loading) return (<div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}><div className="text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-[#ff6b8a]/30 border-t-[#ff6b8a] animate-spin" /><p className="text-gray-400 text-sm">加载中...</p></div></div>);
-  if (error || !user) return (<div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}><div className="card p-8 text-center max-w-md w-full"><div className="text-5xl mb-4">😔</div><h2 className="text-xl font-bold text-gray-800 mb-2">加载失败</h2><p className="text-gray-400 text-sm mb-6">{error || '用户信息不存在'}</p><button onClick={() => navigate('/')} className="px-6 py-2.5 bg-[#ff6b8a] text-white font-medium rounded-xl hover:bg-[#ff5070] transition-colors">返回首页</button></div></div>);
+  if (error || !user) return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}>
+      <div className="card p-8 text-center max-w-md w-full">
+        <div className="text-5xl mb-4">😔</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">加载失败</h2>
+        <p className="text-gray-400 text-sm mb-6">{error || '用户信息不存在'}</p>
+        <div className="flex gap-3">
+          <button onClick={() => navigate('/')} className="flex-1 py-2.5 bg-white/80 text-gray-600 font-medium rounded-xl hover:bg-white transition-colors border border-gray-200">返回首页</button>
+          <button onClick={() => { authStorage.clearAll(); navigate('/login'); }} className="flex-1 py-2.5 bg-[#ff6b8a] text-white font-medium rounded-xl hover:bg-[#ff5070] transition-colors">重新登录</button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen relative" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #ffe8ed 50%, #ffe0e8 100%)' }}>
